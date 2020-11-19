@@ -4,8 +4,18 @@ from itertools import permutations
 from random import randint
 from math import inf
 
+GLOBAL_SHIT = []
 
-def find_euler_cycle(routes: np.array) -> np.array:
+
+def find_euler_cycle_rec(routes: np.ndarray, start_node: int) -> np.ndarray:
+    for i, node in enumerate(routes[start_node]):
+        if routes[start_node][i] >= 0.1:
+            routes[start_node][i] -= 1
+            find_euler_cycle_rec(routes, i)
+    GLOBAL_SHIT.append(start_node)
+
+
+def find_euler_cycle(routes: np.array) -> List:
     """
     Return euler chain from graph
 
@@ -33,7 +43,7 @@ def find_euler_cycle(routes: np.array) -> np.array:
             routes[i][v] -= 1
             st.append(i)
 
-    return np.array(res)
+    return res
 
 
 def prims_mst(routes: np.array) -> np.array:
@@ -157,12 +167,23 @@ class TsmProblemSolver:
         """
         mst = prims_mst(routes) * 2
         euler_cycle = find_euler_cycle(mst)
-        hamiltonian_cycle = np.unique(euler_cycle)
+        # find_euler_cycle_rec(mst, 0)
+        # hamiltonian_cycle = np.unique(np.array(GLOBAL_SHIT))
+        hamiltonian_cycle = np.zeros((routes.shape[0] + 1,))
+        used = [False] * len(routes)
+        j = 0
+        for i in range(len(euler_cycle)):
+            if not used[euler_cycle[i]]:
+                used[euler_cycle[i]] = True
+                hamiltonian_cycle[j] = euler_cycle[i]
+                j += 1
+
         min_distance = 0
 
-        hamiltonian_cycle = np.append(hamiltonian_cycle, hamiltonian_cycle[0])
-        for i in range(0, len(hamiltonian_cycle) - 1):
-            min_distance += routes[i][i - 1]
+        hamiltonian_cycle = hamiltonian_cycle.astype('int32')
+        hamiltonian_cycle[-1] = hamiltonian_cycle[0]
+        for i in range(1, len(hamiltonian_cycle)):
+            min_distance += routes[hamiltonian_cycle[i]][hamiltonian_cycle[i - 1]]
 
         return min_distance, hamiltonian_cycle
 
