@@ -5,11 +5,42 @@ from random import randint
 from math import inf
 
 
-def prims_mst(routes: np.array) -> List[Tuple[int, int]]:
+def find_euler_cycle(routes: np.array) -> np.array:
+    """
+    Return euler chain from graph
+
+    :param routes: adjacent matrix
+    :return: 1d-array of vertices
+    """
+    st = [0]
+    n = len(routes)
+
+    res = []
+    while len(st) > 0:
+        v = st[-1]
+
+        i = 0
+        while i < n:
+            if routes[v][i]:
+                break
+            i += 1
+
+        if i == n:
+            res.append(v)
+            st.pop()
+        else:
+            routes[v][i] -= 1
+            routes[i][v] -= 1
+            st.append(i)
+
+    return np.array(res)
+
+
+def prims_mst(routes: np.array) -> np.array:
     """
     Implements minimum spanning tree finder using Prim's algorithm
     :param routes: np.array matrix of edge weights
-    :return: list of edges
+    :return: adjacent matrix
     """
     n = routes.shape[0]
 
@@ -18,7 +49,7 @@ def prims_mst(routes: np.array) -> List[Tuple[int, int]]:
     sel_e = n * [-1]
     min_e[0] = 0
 
-    mst = []
+    mst = np.zeros_like(routes)
 
     for i in range(n):
         v = -1
@@ -31,7 +62,8 @@ def prims_mst(routes: np.array) -> List[Tuple[int, int]]:
 
         used[v] = True
         if sel_e[v] != -1:
-            mst.append((v, sel_e[v]))
+            mst[v, sel_e[v]] = 1
+            mst[sel_e[v], v] = 1
 
         for to in range(n):
             if routes[v][to] < min_e[to]:
@@ -116,16 +148,25 @@ class TsmProblemSolver:
         return min_distance, min_route
 
     @staticmethod
-    def __christofides_solve__(routes: np.array) -> Tuple[float, np.array]:
+    def __christofides_solve__(routes: np.array) -> Tuple[float, np.ndarray]:
         """
         Christofides algorithm implementation for TSM problem solution
 
         :param routes: numpy matrix of shape (X, X) where X is the total number of nodes
         :return: Tuple of total route distance and numpy array of shape (X) - the resulting node order
         """
-        mst = prims_mst(routes)
+        mst = prims_mst(routes) * 2
+        euler_cycle = find_euler_cycle(mst)
+        hamiltonian_cycle = np.unique(euler_cycle)
+        min_distance = 0
 
-    def solve(self, routes: np.array, method: str) -> Tuple[float, np.array]:
+        hamiltonian_cycle = np.append(hamiltonian_cycle, hamiltonian_cycle[0])
+        for i in range(0, len(hamiltonian_cycle) - 1):
+            min_distance += routes[i][i - 1]
+
+        return min_distance, hamiltonian_cycle
+
+    def solve(self, routes: np.array, method: str) -> Tuple[float, np.ndarray]:
         """
         Solve the TSM problem for euclidean graphs.
 
