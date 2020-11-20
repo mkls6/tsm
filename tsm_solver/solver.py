@@ -4,16 +4,6 @@ from itertools import permutations
 from random import randint
 from math import inf
 
-GLOBAL_SHIT = []
-
-
-def find_euler_cycle_rec(routes: np.ndarray, start_node: int) -> np.ndarray:
-    for i, node in enumerate(routes[start_node]):
-        if routes[start_node][i] >= 0.1:
-            routes[start_node][i] -= 1
-            find_euler_cycle_rec(routes, i)
-    GLOBAL_SHIT.append(start_node)
-
 
 def find_euler_cycle(routes: np.array) -> List:
     """
